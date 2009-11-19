@@ -2,6 +2,8 @@
 
 == Overview
 
+You must have delayed_job installed as a gem or plugin to use this class.
+
 Class for creating delayed jobs that can be de-duped with existing delayed jobs
 already in the delayed jobs table. You just specify some additional columns on
 your delayed_jobs table and set them to have uniqueness constraints. Then

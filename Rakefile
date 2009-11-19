@@ -15,11 +15,12 @@ are factory methods for creating a delayed job in the following ways:
 * with a delayed job handler class (one that responds to perform())
 * with an object, method and method arguments
 * with a code block
+
+NOTE: you must have delayed_job installed as a gem or plugin
 DESC
     gemspec.email = "percivalatumamibuddotcom"
     gemspec.homepage = "http://github.com/bmpercy/unique_delayed_job"
     gemspec.authors = ['Brian Percival']
-    gemspec.add_dependency 'delayed_job', '>= 1.2.0'
     gemspec.files = ["unique_delayed_job.gemspec",
                      "[A-Z]*.*",
                      "lib/**/*.rb"]
