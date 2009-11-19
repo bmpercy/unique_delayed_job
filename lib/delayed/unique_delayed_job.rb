@@ -6,6 +6,36 @@ module Delayed
   #-----------------------------------------------------------------------------
   class UniqueDelayedJob
 
+    cattr_reader :mark_all_locked_jobs_with_null
+
+    @@mark_all_locked_jobs_with_null = true
+
+    # enable the polciy that all delayed job rows that are marked with non-null
+    # locked_by should have their columns set to null...ensuring that if a
+    # job is currently executing then we CAN insert another delayed job with
+    # the same unique keys.
+    # This is useful if you want to run a job every time some event occurs, but
+    # you're using this gem just to prevent having the same job twice in the
+    # queue. But if a job is currently running, it may miss the change in state
+    # due to the latest event, so a new job does need to be added to the queue.
+    # setting the columns to null on any jobs currently locked should 
+    # ensure this behavior.
+    # This is the default behavior.
+    #-----------------------------------------------------------------------------
+    def self.mark_all_locked_jobs_with_null
+      @mark_all_locked_jobs_with_null = true
+    end
+
+    # override the default behavior, and DO NOT mark the columns on a delayed
+    # job that is currently locked to null. this prevents inserting a duplicate
+    # job with a job that is currently running (e.g. if you only want to run
+    # the job once). Default is mark_all_locked_jobs_with_null (see that method)
+    #-----------------------------------------------------------------------------
+    def self.do_not_mark_locked_jobs_with_null
+      @mark_all_locked_jobs_with_null = false
+    end
+
+
     # factory method to create a new UniqueDelayedJob from a delayed job handler
     # object (see delayed job documentation for requirements)
     #
@@ -75,6 +105,17 @@ module Delayed
     #    run_at: 
     #---------------------------------------------------------------------------
     def enqueue(priority = nil, run_at = nil)
+      if mark_all_locked_jobs_with_null && !columns.blank?
+        null_setting_strings = []
+
+        columns.each_key do |c|
+          null_setting_strings << "#{c.to_s} = NULL"
+        end
+
+        Delayed::Job.update_all(null_setting_strings.join("\n              ,"),
+                                "locked_by IS NOT NULL")
+      end
+
       cols_to_insert = columns
       cols_to_insert.merge! :priority => priority if priority
       cols_to_insert.merge! :run_at => run_at if run_at

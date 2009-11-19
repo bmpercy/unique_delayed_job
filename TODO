@@ -1,0 +1,7 @@
+things that can be worked on:
+
+* pretty up the policy around nulling out the unique columns on jobs before
+  inserting the job. Right now, it's basically a process-wide configuration,
+  but improve things to allow it to be set on specific job instances.
+  See UniqueDelayedJob.do_not_mark_locked_jobs_with_null() and
+      UniqueDelayedJob.mark_locked_jobs_with_null() and

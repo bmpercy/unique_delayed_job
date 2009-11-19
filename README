@@ -18,6 +18,23 @@ are factory methods for creating a delayed job in the following ways:
   the block is yielded to, and the result (assumed to be a string) is stored as
   the code to be evaled when the job is deserialized.
 
+== Configuration
+
+You can add whatever columns you need to the delayed_jobs table, and put any
+uniqueness constraints (or not) on them as you wish (unique columns, unique
+composite keys etc.).
+
+Note that by default, UniqueDelayedJob will modify any jobs that are currently locked
+(locked_by is not null)...it will set all of the additional columns specified
+on the job to NULL. (This allows for inserting a new job if a matching job is
+already in process--and thus might be using out-of-date data.) If you do NOT
+want this behavior, and do not want to insert a matching job if another job is
+currently locked/being run, then make the following call. If you like, you can
+change this before/after every job you insert if you want different jobs
+to use different policies.
+
+  UniqueDelayedJob.do_not_mark_locked_jobs_with_null()
+
 == Examples
 
 In each example below, the :user_id => 123 is just to illustrate that you can add
