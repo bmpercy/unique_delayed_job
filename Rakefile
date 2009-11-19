@@ -14,7 +14,7 @@ duplicate key is raised on insert, then the insert will just be ignored. There
 are factory methods for creating a delayed job in the following ways:
 * with a delayed job handler class (one that responds to perform())
 * with an object, method and method arguments
-* with a code block
+* with a code string to be evaled
 
 NOTE: you must have delayed_job installed as a gem or plugin
 DESC

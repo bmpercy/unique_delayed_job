@@ -12,19 +12,38 @@ duplicate key is raised on insert, then the insert will just be ignored. There
 are factory methods for creating a delayed job in the following ways:
 * with a delayed job handler class (one that responds to perform())
 * with an object, method and method arguments
-* with a code block
+* with a string to be evaled see the Delayed::Job.enqueue() method that accepts
+  a block. (looks like the idea may have been added to delayed job here:
+  http://github.com/dhh/delayed_job/commit/89c3a0b77470c0f8510d3c7a51a36cd07747d9a9)
+  the block is yielded to, and the result (assumed to be a string) is stored as
+  the code to be evaled when the job is deserialized.
 
 == Examples
 
-# use a custom handler
-job = Delayed::UniqueDelayedJob.use_handler(MyHandlerClass.new( ...), :user_id => 123)
-job.enqueue  # use default priority and run_at
+In each example below, the :user_id => 123 is just to illustrate that you can add
+arbitrary additional column(s) to the delayed job row being inserted. Presumably,
+the user_id column has uniqueness constraints on it...
 
-# use a method call (similar to using send_later on the object)
-record = MyActiveRecord.find(1)
-job = Delayed::UniqueDelayedJob.call_method(record, :a_method, [arg1, arg2], :user_id => 123)
-job.enqueue(1) # use priority of 1
+(More than one column could be specified; uniqueness is enforced by the db schema,
+and unique delayed job just catches and swallows any duplicate key exceptions.)
 
-# use a code block
-job = Delayed::UniqueDelayedJob.run_block(:user_id => 123) { run_some_code }
-job.enqueue(2, 1.hour.from_now) # priority 1, run at 1 hour from now
+  # use a custom handler
+  job = Delayed::UniqueDelayedJob.use_handler(MyHandlerClass.new( ...), :user_id => 123)
+  job.enqueue  # use default priority and run_at
+
+  # use a method call (similar to using send_later on the object)
+  record = MyActiveRecord.find(1)
+  job = Delayed::UniqueDelayedJob.call_method(record,
+                                              :a_method,
+                                              [arg1, arg2],
+                                              :user_id => 123)
+  job.enqueue(1) # use priority of 1
+
+  # specify a block of code to execute with string (inside a block)
+  # note that the block could be complex logic that results in a string that is
+  # arbitrary ruby code to be evaled
+  # see Delayed::Job::enqueue(args, &block)
+  job = Delayed::UniqueDelayedJob.run_eval(:user_id => 123) do
+    'SomeClass.perform_some_slow_action'
+  end
+  job.enqueue(2, 1.hour.from_now) # run with priority 2 and run at 1 hour from now
