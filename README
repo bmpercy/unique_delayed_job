@@ -1,0 +1,28 @@
+= unique_delayed_job
+
+== Overview
+
+Class for creating delayed jobs that can be de-duped with existing delayed jobs
+already in the delayed jobs table. You just specify some additional columns on
+your delayed_jobs table and set them to have uniqueness constraints. Then
+specify these column values when you create a UniqueDelayedJob and if a
+duplicate key is raised on insert, then the insert will just be ignored. There
+are factory methods for creating a delayed job in the following ways:
+* with a delayed job handler class (one that responds to perform())
+* with an object, method and method arguments
+* with a code block
+
+== Examples
+
+# use a custom handler
+job = UniqueDelayedJob.use_handler(MyHandlerClass.new( ...), :user_id => 123)
+job.enqueue  # use default priority and run_at
+
+# use a method call (similar to using send_later on the object)
+record = MyActiveRecord.find(1)
+job = UniqueDelayedJob.call_method(record, :a_method, [arg1, arg2], :user_id => 123)
+job.enqueue(1) # use priority of 1
+
+# use a code block
+job = UniqueDelayedJob.run_block(:user_id => 123) { run_some_code }
+job.enqueue(2, 1.hour.from_now) # priority 1, run at 1 hour from now
